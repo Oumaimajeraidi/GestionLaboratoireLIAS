@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: gestion-lias
+  profiles:
+    active: prod
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+# Proprietes specifiques a l'application LIAS
+app:
+  jwt:
+    # Cle secrete HS256 (>= 256 bits). A surcharger en production via variable d'env JWT_SECRET.
+    secret: ${JWT_SECRET:bGlhcy1sYWJvLXNlY3JldC1rZXktcG91ci1qd3QtZG9pdC1ldHJlLXRyZXMtbG9uZ3VlLTI1Ni1iaXRz}
+    expiration-ms: 86400000          # 24h
+    refresh-expiration-ms: 604800000 # 7 jours
+  cors:
+    allowed-origins: http://localhost:5173
+  storage:
+    location: ./uploads
+
+server:
+  # 8080 est souvent occupe (Apache / XAMPP) : on utilise 8081 pour le backend.
+  port: 8081
+
+---
+# ====================== PROFIL DEV (H2 en memoire) ======================
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:liasdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+---
+# ====================== PROFIL PROD (MySQL) ======================
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:mysql://localhost:3306/lias_db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.MySQLDialect
